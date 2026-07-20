@@ -1,0 +1,5 @@
+langchain
+pypdf
+tqdm
+langchain-community
+python-dotenv

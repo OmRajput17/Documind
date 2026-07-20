@@ -1,0 +1,24 @@
+document-intelligence-agent/
+├── ingestion/
+│   ├── loaders.py          # PyPDF/pdfplumber for clean text
+│   ├── ocr.py               # Tesseract for scanned docs
+│   └── chunking.py
+├── retrieval/
+│   ├── embeddings.py
+│   ├── vectorstore.py       # ChromaDB interface
+│   └── reranker.py
+├── cache/
+│   └── semantic_cache.py    # Redis + small FAISS index
+├── orchestrator/
+│   └── graph.py             # LangGraph — router, retry loop, checkpointer setup
+├── guardrails/
+│   └── validators.py        # input validation, PII, injection defense
+├── generation/
+│   └── generator.py
+├── evaluation/
+│   └── eval_pipeline.py     # golden set, RAG triad scoring
+├── api/
+│   └── main.py               # FastAPI endpoints
+├── Dockerfile
+├── .github/workflows/ci.yml
+└── requirements.txt
