@@ -1,5 +1,8 @@
 langchain
-pypdf
+pymupdf
 tqdm
 langchain-community
 python-dotenv
+langchain-huggingface
+langchain-chroma
+sentence-transformers

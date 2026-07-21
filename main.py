@@ -1,5 +1,7 @@
 from src.ingestion.loader import Ingestion
 from src.ingestion.chunking import Chunker
+from src.retrieval.embeddings import get_embeddings_model
+from src.retrieval.vectorstore import VectorStore
 
 
 def main():
@@ -34,7 +36,26 @@ def main():
             print(f"  Length  : {len(chunk.page_content)} chars")
             # print(f"  Preview : {chunk.page_content[:150].strip()}...")
 
-    
+    ### Embeddings + Vector Store
+    embedding_model = get_embeddings_model()
+
+    vs = VectorStore(embedding_model=embedding_model)
+    store = vs.build_vector_store(chunks=chunks)
+
+    ### Retrieval Test
+    test_query = "What is the candidate's experience with AI?"
+    print(f"\n--- Retrieval Test ---")
+    print(f"Query: {test_query}\n")
+
+    results = store.similarity_search(test_query, k=3)
+
+    for i, doc in enumerate(results):
+        print(f"  [Result {i+1}]")
+        print(f"  Source  : {doc.metadata.get('source')}")
+        print(f"  Page    : {doc.metadata.get('page')}")
+        # print(f"  Preview : {doc.page_content[:200].strip()}")
+        # print()
+
 
 if __name__ == "__main__":
     main()

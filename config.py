@@ -2,6 +2,9 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 
+# Suppress HuggingFace Hub symlink warning on Windows
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+
 ### Paths
 BASE_DIR = Path(__file__).resolve().parent
 DATA_FOLDER = "data/"
@@ -20,4 +23,8 @@ TEXT_SEPARATORS = [
     " ",
     ""
 ]
+
+## Embedding Model
+EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+MODEL_CACHE_PATH = BASE_DIR / "models"
 

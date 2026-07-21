@@ -219,3 +219,8 @@ __marimo__/
 
 data/
 notes.txt
+
+# DocuMind project-specific
+models/
+vectorstore/
+logs/
