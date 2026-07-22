@@ -2,6 +2,8 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 
+load_dotenv()
+
 # Suppress HuggingFace Hub symlink warning on Windows
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 
@@ -28,3 +30,14 @@ TEXT_SEPARATORS = [
 EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 MODEL_CACHE_PATH = BASE_DIR / "models"
 
+### Retriever
+TOP_K = 5
+CONFIDENCE_THRESHOLD = 0.5
+
+
+### Graph
+MAX_RETRIES = 3
+
+### LLM
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+MODEL = "llama-3.3-70b-versatile"

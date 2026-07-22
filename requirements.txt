@@ -6,3 +6,5 @@ python-dotenv
 langchain-huggingface
 langchain-chroma
 sentence-transformers
+langchain-groq
+langgraph

@@ -1,7 +1,9 @@
 from src.ingestion.loader import Ingestion
 from src.ingestion.chunking import Chunker
-from src.retrieval.embeddings import get_embeddings_model
-from src.retrieval.vectorstore import VectorStore
+from src.ingestion.embeddings import get_embeddings_model
+from src.vector_store.vectorstore import VectorStore
+from src.retrieval.retriever import Retriever
+from src.orchestrator.graph import build_graph
 
 
 def main():
@@ -18,23 +20,13 @@ def main():
         print(f"\nFirst page preview:")
         print(f"  Source : {first.metadata.get('source')}")
         print(f"  Page   : {first.metadata.get('page')}")
-        # print(f"  Content: {first.page_content[:200].strip()}...")
 
-    ### Chunking the Docs
+    ### Chunking
     chunker = Chunker()
     chunks = chunker.chunk_documents(documents=documents)
 
     print(f"\n--- Chunking Results ---")
     print(f"Total chunks : {len(chunks)}")
-
-    if chunks:
-        print(f"\nSample chunks (first 3):")
-        for i, chunk in enumerate(chunks[:3]):
-            print(f"\n  [Chunk {i+1}]")
-            print(f"  Source  : {chunk.metadata.get('source')}")
-            print(f"  Page    : {chunk.metadata.get('page')}")
-            print(f"  Length  : {len(chunk.page_content)} chars")
-            # print(f"  Preview : {chunk.page_content[:150].strip()}...")
 
     ### Embeddings + Vector Store
     embedding_model = get_embeddings_model()
@@ -42,19 +34,34 @@ def main():
     vs = VectorStore(embedding_model=embedding_model)
     store = vs.build_vector_store(chunks=chunks)
 
-    ### Retrieval Test
+    ### Graph Test
+    from langchain_groq import ChatGroq
+    from config import GROQ_API_KEY, MODEL
+
+    llm = ChatGroq(model=MODEL, api_key=GROQ_API_KEY)
+
+    retriever = Retriever(vectorstore=store)
+    graph = build_graph(retriever=retriever, llm=llm)
+
     test_query = "What is the candidate's experience with AI?"
-    print(f"\n--- Retrieval Test ---")
+
+    print(f"\n--- Graph Test ---")
     print(f"Query: {test_query}\n")
 
-    results = store.similarity_search(test_query, k=3)
+    result = graph.invoke({
+        "query": test_query,
+        "original_query": test_query,
+        "retries": 0,
+        "retrieved_docs": [],
+        "confidence": 0.0,
+        "is_confident": False,
+        "answer": "",
+    })
 
-    for i, doc in enumerate(results):
-        print(f"  [Result {i+1}]")
-        print(f"  Source  : {doc.metadata.get('source')}")
-        print(f"  Page    : {doc.metadata.get('page')}")
-        # print(f"  Preview : {doc.page_content[:200].strip()}")
-        # print()
+    print(f"  Retries       : {result['retries']}")
+    print(f"  Confidence    : {result['confidence']:.3f}")
+    print(f"  Final Query   : {result['query']}")
+    print(f"\n  Answer:\n  {result['answer']}")
 
 
 if __name__ == "__main__":

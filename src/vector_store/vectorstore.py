@@ -46,7 +46,8 @@ class VectorStore:
             self.store = Chroma.from_documents(
                 documents=chunks,
                 embedding=self.embedding_model,
-                persist_directory=self.persist_directory
+                persist_directory=self.persist_directory,
+                collection_metadata={"hnsw:space": "cosine"},
             )
 
             logger.info(
@@ -72,6 +73,7 @@ class VectorStore:
             self.store = Chroma(
                 persist_directory=self.persist_directory,
                 embedding_function=self.embedding_model,
+                collection_metadata={"hnsw:space": "cosine"},
             )
 
             logger.info("Vector store loaded successfully.")
