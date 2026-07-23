@@ -18,18 +18,14 @@ def check_confidence(results: List[Tuple[Document, float]]) -> tuple[bool, float
         logger.warning("No documents retrieved; confidence is zero.")
         return False, 0.0
 
-    top_score = results[0][1]
-
-    if not 0 <= top_score <= 1:
-        logger.warning(
-            f"Unexpected relevance score: {top_score}"
-        )
+    top_score = float(results[0][1])
 
     is_confident = top_score >= CONFIDENCE_THRESHOLD
 
     logger.info(
-        f"Top score: {top_score:.3f} "
+        f"Top reranker score: {top_score:.3f} "
         f"(threshold={CONFIDENCE_THRESHOLD:.2f}) "
         f"-> confident={is_confident}"
     )
+
     return is_confident, top_score

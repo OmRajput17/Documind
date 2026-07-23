@@ -8,13 +8,14 @@ from config import MAX_RETRIES
 
 from src.retrieval.query_reformulator import QueryRewriter
 from src.utils.confidence import check_confidence
-
 logger = get_logger(__name__)
 
 
 class GraphState(TypedDict):
     query: str
     original_query: str
+
+    rewrite_history: List[str]
 
     retries: int
 
@@ -72,11 +73,25 @@ def build_graph(retriever, llm):
     def reformulate_node(state: GraphState) -> GraphState:
         logger.info("Low confidence. Reformulating query...")
 
-        new_query = rewriter.reformulate_query(state["query"])
+        new_query = rewriter.reformulate_query(
+            original_query=state["original_query"],
+            previous_queries=state["rewrite_history"],
+        )
+
+        logger.info(f"Rewritten query: '{new_query}'")
+
+        # Create a new history (don't mutate the existing one)
+        rewrite_history = state["rewrite_history"]
+
+        if new_query not in rewrite_history:
+            rewrite_history = [*rewrite_history, new_query]
+        else:
+            logger.warning("Duplicate reformulation generated.")
 
         return {
             **state,
             "query": new_query,
+            "rewrite_history": rewrite_history,
             "retries": state["retries"] + 1,
         }
 

@@ -51,6 +51,7 @@ def main():
     result = graph.invoke({
         "query": test_query,
         "original_query": test_query,
+        "rewrite_history": [test_query],
         "retries": 0,
         "retrieved_docs": [],
         "confidence": 0.0,
