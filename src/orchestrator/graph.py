@@ -1,4 +1,4 @@
-from typing import List, Tuple, TypedDict
+from typing import List, Tuple, TypedDict, Dict, Any
 
 from langgraph.graph import StateGraph, END
 from langchain_core.documents import Document
@@ -8,6 +8,7 @@ from config import MAX_RETRIES
 
 from src.retrieval.query_reformulator import QueryRewriter
 from src.utils.confidence import check_confidence
+from src.guardrails.prompt_injection import PromptInjectionGuard
 logger = get_logger(__name__)
 
 
@@ -24,6 +25,10 @@ class GraphState(TypedDict):
     confidence: float
     is_confident: bool
 
+    blocked: bool
+    guardrail_response: str
+    guardrail_metadata: Dict[str, Any]
+
     answer: str
 
 
@@ -33,6 +38,36 @@ def build_graph(retriever, llm):
     """
 
     rewriter = QueryRewriter(llm)
+
+    prompt_guard = PromptInjectionGuard()
+
+    # -------------------------
+    # Prompt Injection Guard
+    # -------------------------
+
+    def prompt_injection_node(state: GraphState) -> GraphState:
+        logger.info("Running prompt injection guardrail...")
+
+        result = prompt_guard.check(state["query"])
+
+        if result["blocked"]:
+            logger.warning("Prompt injection detected. Blocking request.")
+
+            return {
+                **state,
+                "blocked": True,
+                "guardrail_response": (
+                    "Your request appears to contain prompt injection "
+                    "or instruction manipulation."
+                ),
+                "guardrail_metadata": result,
+            }
+
+        return {
+            **state,
+            "blocked": False,
+            "guardrail_metadata": result,
+        }
 
     # -------------------------
     # Retrieve
@@ -130,6 +165,19 @@ def build_graph(retriever, llm):
     # -------------------------
     # Routing
     # -------------------------
+    def blocked_node(state: GraphState) -> GraphState:
+        logger.info("Returning guardrail response.")
+
+        return {
+            **state,
+            "answer": state["guardrail_response"],
+        }
+
+    def route_after_guardrail(state: GraphState) -> str:
+        if state["blocked"]:
+            return "blocked"
+
+        return "retrieve"
 
     def route_after_confidence(state: GraphState) -> str:
         """
@@ -153,13 +201,25 @@ def build_graph(retriever, llm):
     # -------------------------
 
     graph = StateGraph(GraphState)
-
+    graph.add_node("prompt_injection", prompt_injection_node)
+    graph.add_node("blocked", blocked_node)
     graph.add_node("retrieve", retrieve_node)
     graph.add_node("check_confidence", confidence_node)
     graph.add_node("reformulate", reformulate_node)
     graph.add_node("generate", generate_node)
 
-    graph.set_entry_point("retrieve")
+    graph.set_entry_point("prompt_injection")
+
+    graph.add_conditional_edges(
+        "prompt_injection",
+        route_after_guardrail,
+        {
+            "retrieve": "retrieve",
+            "blocked": "blocked",
+        },
+    )
+
+    graph.add_edge("blocked", END)
 
     graph.add_edge("retrieve", "check_confidence")
 

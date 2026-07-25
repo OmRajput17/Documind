@@ -43,3 +43,19 @@ MAX_RETRIES = 3
 ### LLM
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 MODEL = "llama-3.3-70b-versatile"
+
+
+### Guardrials
+PROMPT_INJECTION_PATTERNS = {
+    r"ignore\s+(all\s+)?previous\s+instructions": 4,
+    r"forget\s+(all\s+)?previous\s+instructions": 4,
+    r"reveal\s+(your\s+)?system\s+prompt": 5,
+    r"show\s+(me\s+)?(your\s+)?prompt": 5,
+    r"developer\s+message": 5,
+    r"system\s+prompt": 5,
+    r"jailbreak": 4,
+    r"bypass": 3,
+    r"disable\s+safety": 4,
+    r"act\s+as": 2,
+}
+PROMPT_INJECTION_THRESHOLD = 5
