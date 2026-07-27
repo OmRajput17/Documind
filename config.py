@@ -42,7 +42,10 @@ MAX_RETRIES = 3
 
 ### LLM
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-MODEL = "llama-3.3-70b-versatile"
+VALIDATION_LLM ="llama-3.1-8b-instant"
+LLM_MODEL = "llama-3.3-70b-versatile"
+VALIDATION_TEMPERATURE = 0
+GENERATION_TEMPERATURE = 0.5
 
 
 ### Guardrials

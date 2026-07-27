@@ -4,6 +4,7 @@ from src.ingestion.embeddings import get_embeddings_model
 from src.vector_store.vectorstore import VectorStore
 from src.retrieval.retriever import Retriever
 from src.orchestrator.graph import build_graph
+from src.utils.get_llm import get_generation_llm
 
 
 def main():
@@ -35,12 +36,13 @@ def main():
     store = vs.build_vector_store(chunks=chunks)
 
     ### Graph Test
-    from langchain_groq import ChatGroq
-    from config import GROQ_API_KEY, MODEL
+    # LLM
+    llm = get_generation_llm()
 
-    llm = ChatGroq(model=MODEL, api_key=GROQ_API_KEY)
-
+    # Retriever
     retriever = Retriever(vectorstore=store)
+    
+    # Graph
     graph = build_graph(retriever=retriever, llm=llm)
 
     test_queries = [
