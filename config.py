@@ -130,8 +130,8 @@ PROMPT_INJECTION_PATTERNS = {
 }
 
 # Two-tier thresholds — see routing logic below.
-PROMPT_INJECTION_AMBIGUOUS_THRESHOLD = 3   # escalate to DeepTeam (Gemini judge)
-PROMPT_INJECTION_THRESHOLD = 5              # hard block, skip DeepTeam entirely
+PROMPT_INJECTION_REVIEW_THRESHOLD = 3   # escalate to DeepTeam (Gemini judge)
+PROMPT_INJECTION_BLOCK_THRESHOLD = 5              # hard block, skip DeepTeam entirely
 
 
 # ------------------------------------------------------------------
