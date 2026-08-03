@@ -190,3 +190,6 @@ PII_PLACEHOLDERS = {
     "IFSC": "[IFSC]",
     "UPI": "[UPI]",
 }
+
+
+NVIDIA_API_KEY = os.getenv("NVIDIA_NIM_API_KEY")
