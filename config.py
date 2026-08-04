@@ -31,7 +31,7 @@ EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 MODEL_CACHE_PATH = BASE_DIR / "models"
 
 ### Retriever
-RETRIEVAL_TOP_K = 20
+RETRIEVAL_TOP_K = 10
 CONFIDENCE_THRESHOLD = 0.5
 RERANKER_MODEL_NAME = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 RERANK_TOP_K = 5

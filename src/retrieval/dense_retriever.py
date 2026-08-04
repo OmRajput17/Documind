@@ -5,17 +5,14 @@ from langchain_core.documents import Document
 from langchain_chroma import Chroma
 from logger import get_logger
 
-from src.retrieval.reranker import Reranker
-
-from config import RETRIEVAL_TOP_K, RERANK_TOP_K
+from config import RETRIEVAL_TOP_K
 
 logger = get_logger(__name__)
 
-class Retriever:
+class DenseRetriever:
     def __init__(self, vectorstore: Chroma, k: int = RETRIEVAL_TOP_K):
         self.vectorstore = vectorstore
         self.k = k
-        self.reranker = Reranker()
     
 
     def retrieve(self, query: str) -> List[Tuple[Document, float]]:
@@ -44,16 +41,9 @@ class Retriever:
                     k=self.k
                 )
 
-            results = self.reranker.rerank(
-                query=query,
-                results=results,
-                top_n=RERANK_TOP_K
-            )
-
             if results:
                 logger.info(
-                    f"Retrieved and reranked {len(results)} chunks "
-                    f"(best rerank score: {results[0][1]:.3f})"
+                    f"Retrieved {len(results)} chunks "
                 )
             else:
                 logger.warning("No relevant chunks found.")
