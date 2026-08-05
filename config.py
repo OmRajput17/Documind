@@ -33,7 +33,7 @@ MODEL_CACHE_PATH = BASE_DIR / "models"
 ### Retriever
 RETRIEVAL_TOP_K = 10
 CONFIDENCE_THRESHOLD = 0.5
-RERANKER_MODEL_NAME = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+RERANKER_MODEL_NAME = "BAAI/bge-reranker-base"
 RERANK_TOP_K = 5
 
 

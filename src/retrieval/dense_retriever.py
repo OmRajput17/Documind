@@ -1,11 +1,11 @@
 import warnings
-import time
 from typing import List, Tuple
-from langchain_core.documents import Document
+
 from langchain_chroma import Chroma
-from logger import get_logger
+from langchain_core.documents import Document
 
 from config import RETRIEVAL_TOP_K
+from logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -13,7 +13,6 @@ class DenseRetriever:
     def __init__(self, vectorstore: Chroma, k: int = RETRIEVAL_TOP_K):
         self.vectorstore = vectorstore
         self.k = k
-    
 
     def retrieve(self, query: str) -> List[Tuple[Document, float]]:
         """
@@ -33,18 +32,15 @@ class DenseRetriever:
         logger.info(f"Retrieving top-{self.k} chunks for query '{query}'")
 
         try:
-
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", UserWarning)
                 results = self.vectorstore.similarity_search_with_relevance_scores(
                     query=query,
-                    k=self.k
+                    k=self.k,
                 )
 
             if results:
-                logger.info(
-                    f"Retrieved {len(results)} chunks "
-                )
+                logger.info(f"Retrieved {len(results)} chunks")
             else:
                 logger.warning("No relevant chunks found.")
 

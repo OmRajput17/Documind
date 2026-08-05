@@ -389,3 +389,43 @@ bm25_test_queries = [
     "What is the role of the softmax layer?",
     "What are residual connections?"
 ]
+
+hybrid_retriever_test_queries = [
+    # Transformer concepts
+    "What is self attention?",
+    "Explain multi headed attention.",
+    "What are query, key and value vectors?",
+    # "How is the attention score calculated?",
+    # "How does positional encoding work?",
+    # "What is the purpose of the encoder?",
+    # "How does the decoder work?",
+    # "Explain beam search.",
+    # "What is the role of the softmax layer?",
+    # "What are residual connections?",
+
+    # Resume (AI Developer)
+    "What AI projects has Om Rajput built?",
+    "Which vector databases has Om Rajput used?",
+    # "What LLM frameworks does Om Rajput know?",
+    # "Does Om Rajput have experience with LangGraph?",
+    # "What cloud technologies does Om Rajput know?",
+
+    # Resume (SDE)
+    "What backend technologies has Om Rajput worked with?",
+    # "Describe Om Rajput's ETL pipeline project.",
+    "What databases has Om Rajput used?",
+    "What programming languages does Om Rajput know?",
+    # "What open source contributions has Om Rajput made?",
+
+    # Hybrid retrieval stress tests
+    "Explain self attention in the transformer architecture.",
+    "How are query vectors generated?",
+    "Tell me about LangChain and LangGraph experience.",
+    # "Describe the AI agent project.",
+    # "Which project uses ChromaDB?",
+    # "What is reciprocal rank fusion?",
+    # "How does cross attention work?",
+    # "Summarize the Transformer architecture.",
+    # "What machine learning frameworks are mentioned?",
+    # "Explain the document retrieval pipeline."
+]
