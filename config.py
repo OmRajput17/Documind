@@ -31,10 +31,12 @@ EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 MODEL_CACHE_PATH = BASE_DIR / "models"
 
 ### Retriever
-RETRIEVAL_TOP_K = 10
+DENSE_TOP_K = 20
+BM25_TOP_K = 20
+RRF_TOP_N = 15
+HYBRID_TOP_K = 8
 CONFIDENCE_THRESHOLD = 0.5
 RERANKER_MODEL_NAME = "BAAI/bge-reranker-base"
-RERANK_TOP_K = 5
 
 
 ### Graph
