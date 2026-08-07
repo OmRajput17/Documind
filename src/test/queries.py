@@ -429,3 +429,31 @@ hybrid_retriever_test_queries = [
     # "What machine learning frameworks are mentioned?",
     # "Explain the document retrieval pipeline."
 ]
+
+
+generation_pipeline_test_queries = [
+    "What is self-attention in the Transformer architecture?",
+    "Explain the role of query, key, and value vectors.",
+    "How does multi-head attention work?",
+    "What AI projects has Om Rajput built?",
+    "Which vector databases has Om Rajput used?",
+    "What backend technologies has Om Rajput worked with?",
+    "Explain positional encoding.",
+    "What is the purpose of the encoder and decoder?",
+]
+
+rag_pipeline_test_queries = [
+    # Transformer concepts
+    "What is self-attention in the Transformer architecture?",
+    "Explain multi-head attention.",
+    "How does positional encoding work?",
+
+    # Resume
+    "What AI projects has Om Rajput built?",
+    "Which LLM frameworks and tools has Om Rajput worked with?",
+    "What backend technologies has Om Rajput used?",
+
+    # Edge cases
+    "Summarize all the uploaded documents.",
+    "What is the main topic of the provided PDFs?",
+]

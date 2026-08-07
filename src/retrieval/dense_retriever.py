@@ -4,13 +4,13 @@ from typing import List, Tuple
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 
-from config import RETRIEVAL_TOP_K
+from config import DENSE_TOP_K
 from logger import get_logger
 
 logger = get_logger(__name__)
 
 class DenseRetriever:
-    def __init__(self, vectorstore: Chroma, k: int = RETRIEVAL_TOP_K):
+    def __init__(self, vectorstore: Chroma, k: int = DENSE_TOP_K):
         self.vectorstore = vectorstore
         self.k = k
 

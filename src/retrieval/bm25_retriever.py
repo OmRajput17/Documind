@@ -5,7 +5,7 @@ import numpy as np
 from rank_bm25 import BM25Okapi
 from langchain_core.documents import Document
 
-from config import RETRIEVAL_TOP_K
+from config import BM25_TOP_K
 from logger import get_logger
 
 logger = get_logger(__name__)
@@ -16,7 +16,7 @@ class BM25Retriever:
     Keyword-based retriever using the BM25 ranking algorithm.
     """
 
-    def __init__(self, documents: List[Document], k: int = RETRIEVAL_TOP_K):
+    def __init__(self, documents: List[Document], k: int = BM25_TOP_K):
         """
         Initialize the BM25 retriever.
 

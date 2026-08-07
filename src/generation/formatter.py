@@ -1,6 +1,8 @@
-from typing import Any, Dict, List, Tuple
+from typing import List, Tuple
 
 from langchain_core.documents import Document
+
+from src.models.rag import RAGResponse, Source
 
 
 class ResponseFormatter:
@@ -8,7 +10,7 @@ class ResponseFormatter:
     Formats the final response with answer and source metadata.
     """
 
-    def format(self, answer: str, retrieved_docs: List[Tuple[Document, float]]) -> Dict[str, Any]:
+    def format(self, answer: str, retrieved_docs: List[Tuple[Document, float]]) -> RAGResponse:
         """
         Format the generated answer with supporting sources.
 
@@ -20,16 +22,16 @@ class ResponseFormatter:
             Formatted response.
         """
 
-        sources = [
-            {
-                "source": doc.metadata.get("source", "Unknown"),
-                "page": doc.metadata.get("page", "N/A"),
-                "relevance_score": round(score, 3)
-            }
-            for doc, score in retrieved_docs
-        ]
+        
 
-        return {
-            "answer": answer,
-            "sources": sources
-        }
+        return RAGResponse(
+            answer=answer,
+            sources=[
+                Source(
+                    source=doc.metadata.get("source", "Unknown"),
+                    page=doc.metadata.get("page"),
+                    relevance_score=round(score, 3),
+                )
+                for doc, score in retrieved_docs
+            ],
+        )
