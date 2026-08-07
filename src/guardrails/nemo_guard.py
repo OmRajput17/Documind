@@ -53,20 +53,27 @@ class NemoGuard:
                         "role":"user",
                         "content":query
                     }
-                ]
+                ],
+                options={"rails": ["input"]}
             )
+            
+            messages = response.response or []
 
-            # With enable_rails_exceptions=True, a blocked input comes back
-            # as a structured exception object instead of a text refusal.
-            if (
-                isinstance(response, dict)
-                and response.get("role") == "exception"
-                and response.get("content", {}).get("type") == "InputRailException"
-            ):
-                return NemoGuardResult(
-                    action="BLOCK",
-                    reason="Blocked by NeMo Guardrails self_check_input."
-                )
+            if messages:
+                first = messages[0]
+
+                if (
+                    first.get("role") == "exception"
+                    and first.get("content", {}).get("type") == "InputRailException"
+                ):
+                    logger.warning("NeMo Guardrails blocked query.")
+
+                    return NemoGuardResult(
+                        action="BLOCK",
+                        reason="Blocked by NeMo Guardrails self_check_input."
+                    )
+
+            logger.info("NeMo Guardrails allowed query.")
 
             return NemoGuardResult(
                 action="ALLOW",
