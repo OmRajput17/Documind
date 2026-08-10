@@ -2,7 +2,7 @@ from typing import List, Tuple
 
 from langchain_core.documents import Document
 
-from src.models.rag import RAGResponse, Source
+from src.datamodels.rag import RAGResponse, Source
 
 
 class ResponseFormatter:

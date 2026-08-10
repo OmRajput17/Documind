@@ -3,7 +3,7 @@ from src.generation.prompt_builder import PromptBuilder
 from src.generation.generator import Generator
 from src.generation.formatter import ResponseFormatter
 
-from src.models.rag import RAGResponse
+from src.datamodels.rag import RAGResponse
 
 from logger import get_logger
 

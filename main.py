@@ -71,7 +71,7 @@ def build_pipeline():
     chunker = Chunker()
     chunks = chunker.chunk_documents(documents)
 
-    # Embedding model
+    # Embedding model — lru_cached, same instance reused if called again
     embedding_model = get_embeddings_model()
 
     # Vector store — load if it exists and has documents, otherwise build and persist
@@ -96,7 +96,8 @@ def build_pipeline():
         )
 
     # Retriever stack
-    bm25     = BM25Retriever(documents=chunks)
+    # Reranker uses _load_cross_encoder() which is lru_cached — model loads once
+    bm25     = BM25Retriever(documents=chunks)   # index loaded from cache or rebuilt
     dense    = DenseRetriever(vectorstore=vectorstore)
     rrf      = ReciprocalRankFusion()
     reranker = Reranker()

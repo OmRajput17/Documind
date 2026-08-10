@@ -30,6 +30,9 @@ TEXT_SEPARATORS = [
 EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 MODEL_CACHE_PATH = BASE_DIR / "models"
 
+## BM25 Index Cache
+BM25_CACHE_PATH = BASE_DIR / "cache" / "bm25_index.pkl"
+
 ### Retriever
 DENSE_TOP_K = 20
 BM25_TOP_K = 20
