@@ -1,3 +1,5 @@
+# src/generation/formatter.py
+
 from typing import List, Tuple
 
 from langchain_core.documents import Document

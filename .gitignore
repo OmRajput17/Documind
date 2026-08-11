@@ -224,3 +224,5 @@ notes.txt
 models/
 vectorstore/
 logs/
+cache/
+results/
