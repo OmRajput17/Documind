@@ -1,7 +1,8 @@
-from logger import get_logger
 from typing import List
 
 from langchain_core.prompts import ChatPromptTemplate
+
+from logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -15,7 +16,10 @@ class QueryRewriter:
         self.llm = llm
         self.prompt = ChatPromptTemplate.from_template(
             """
-           The following search query resulted in poor retrieval.
+            You are a query reformulation component for a Retrieval-Augmented
+            Generation system.
+
+            The following user query produced low-confidence document retrieval.
 
             Original query:
             {query}
@@ -23,13 +27,16 @@ class QueryRewriter:
             Previous reformulations:
             {previous_queries}
 
-            Generate ONE new reformulation.
+            Generate ONE new reformulation that is more likely to retrieve
+            relevant documents.
 
             Rules:
-            - Preserve the original meaning.
+            - Preserve the original meaning and intent.
             - Do not answer the question.
+            - Do not introduce information that is not present in the original query.
             - Do not repeat any previous reformulation.
-            - Avoid Boolean operators (AND, OR, NOT).
+            - Avoid Boolean operators such as AND, OR, and NOT.
+            - Make the query clear and retrieval-oriented.
             - Optimize for semantic vector search.
             - Return ONLY the rewritten query.
             """
@@ -50,38 +57,74 @@ class QueryRewriter:
             raise ValueError("Query cannot be empty.")
 
         logger.info(
-            "Reformulating query.\n"
-            f"Original: {original_query}\n"
-            f"Previous: {previous_queries}"
+            "Reformulating query. "
+            "Original: '%s' | Previous: %s",
+            original_query,
+            previous_queries,
         )
 
         try:
-            prompt = self.prompt.invoke({
-                "query":original_query,
-                "previous_queries":"\n".join(previous_queries)
-            })
+            previous_queries_text = (
+                "\n".join(
+                    f"- {query}"
+                    for query in previous_queries
+                )
+                if previous_queries
+                else "None"
+            )
+
+            prompt = self.prompt.invoke(
+                {
+                    "query": original_query,
+                    "previous_queries": previous_queries_text,
+                }
+            )
+
             response = self.llm.invoke(prompt)
 
             new_query = response.content.strip()
 
+
             if not new_query:
-                logger.warning("LLM returned an empty query. Using original.")
+                logger.warning(
+                    "LLM returned an empty reformulation. "
+                    "Using original query."
+                )
                 return original_query
-
-            if new_query.lower() in {
-                q.lower() for q in previous_queries
-            }:
-                logger.warning("Duplicate reformulation generated.")
-                return original_query
-
-            if new_query.lower() == original_query.lower():
-                logger.info("Query unchanged after reformulation.")
-                return original_query
-
-            logger.info(f"Rewritten query: '{new_query}'")
             
+            new_query = new_query.strip("\"'")
+
+            previous_normalized = {
+                query.strip().lower()
+                for query in previous_queries
+            }
+
+            if new_query.lower() in previous_normalized:
+                logger.warning(
+                    "Duplicate reformulation generated. "
+                    "Using original query."
+                )
+                return original_query
+
+            # --------------------------------------------------
+            # Unchanged query check
+            # --------------------------------------------------
+            if new_query.lower() == original_query.strip().lower():
+                logger.info(
+                    "Query unchanged after reformulation. "
+                    "Using original query."
+                )
+                return original_query
+
+            logger.info(
+                "Query successfully reformulated: '%s'",
+                new_query,
+            )
+
             return new_query
 
         except Exception:
-            logger.exception("Query Reformulation failed.")
+            logger.exception(
+                "Query reformulation failed."
+            )
             raise

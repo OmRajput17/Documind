@@ -13,7 +13,7 @@ BENCHMARK_QUERIES = list(main_pipeline_test_queries)
 
 
 # Number of times each query is executed.
-BENCHMARK_RUNS = 5
+BENCHMARK_RUNS = 3
 
 # Number of warm-up executions before collecting measurements.
 WARMUP_RUNS = 1
