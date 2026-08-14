@@ -31,10 +31,15 @@ class RAGState(TypedDict, total = False):
     retrieved_docs: List[Tuple[Document, float]]
     retrieval_confidence: float
 
+    ## Best Retrieval
+    best_retrieved_docs: List[Tuple[Document, float]]
+    best_retrieval_confidence: float
+    best_query: str
+
     ## Query Reformulation
     reformulated_query: str
     reformulation_count: int
-    max_reformulation: int
+    max_reformulations: int
     rewrite_history: List[str]
 
     ## Generation 

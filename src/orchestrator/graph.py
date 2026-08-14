@@ -52,7 +52,7 @@ class RAGGraph:
         self.generator = generator
         self.formatter = formatter
 
-        self.max_reformulation = max_reformulations
+        self.max_reformulations = max_reformulations
 
         self.graph = self._build_graph()
 
@@ -268,13 +268,13 @@ class RAGGraph:
         """
 
         query = (
-            state.get("reformulated_query")
+            state.get("best_query")
             or state["masked_query"]
         )
 
         prompt = self.prompt_builder.build(
             query=query,
-            retrieved_docs = state["retrieved_docs"]
+            retrieved_docs = state["best_retrieved_docs"]
         )
 
         return {
@@ -300,13 +300,78 @@ class RAGGraph:
 
         response = self.formatter.format(
             answer = state["answer"],
-            retrieved_docs = state["retrieved_docs"]
+            retrieved_docs = state["best_retrieved_docs"]
         )
 
         return {
             "response":response,
             "status":"COMPLETED"
         }
+
+    def update_best_retrieval(self, state: RAGState):
+        """
+        Keep the highest-confidence retrieval result encountered
+        during the reformulation loop.
+        """
+
+        current_confidence = state.get(
+            "retrieval_confidence",
+            0.0,
+        )
+
+        current_docs = state.get(
+            "retrieved_docs",
+            [],
+        )
+
+        current_query = (
+            state.get("reformulated_query")
+            or state["masked_query"]
+        )
+
+        best_confidence = state.get(
+            "best_retrieval_confidence"
+        )
+
+        # First retrieval
+        if best_confidence is None:
+            logger.info(
+                "Initializing best retrieval. "
+                "Confidence: %.3f",
+                current_confidence,
+            )
+
+            return {
+                "best_retrieved_docs": current_docs,
+                "best_retrieval_confidence": current_confidence,
+                "best_query": current_query,
+            }
+
+        # New best
+        if current_confidence > best_confidence:
+            logger.info(
+                "New best retrieval found. "
+                "Previous: %.3f | Current: %.3f",
+                best_confidence,
+                current_confidence,
+            )
+
+            return {
+                "best_retrieved_docs": current_docs,
+                "best_retrieval_confidence": current_confidence,
+                "best_query": current_query,
+            }
+
+        # Keep existing best
+        logger.info(
+            "Keeping previous best retrieval. "
+            "Best: %.3f | Current: %.3f",
+            best_confidence,
+            current_confidence,
+        )
+
+        return {}
+
 
     #####################
     # Conditional Routing
@@ -361,39 +426,49 @@ class RAGGraph:
             0
         )
 
-        confidence = state.get(
+        current_confidence = state.get(
             "retrieval_confidence",
+            0.0
+        )
+
+        best_confidence = state.get(
+            "best_retrieval_confidence",
             0.0
         )
 
         threshold = self.confidence_evaluator.threshold
 
-        if confidence >= threshold:
+        if current_confidence >= threshold:
             logger.info(
-                "Retrieval confidence %.3f >= %.3f. "
+                "Current Retrieval confidence %.3f >= %.3f. "
                 "Continuing to generation.",
-                confidence,
+                current_confidence,
                 threshold,
             )
 
             return "build_prompt"
         
-        if reformulation_count >= self.max_reformulation:
+        if reformulation_count >= self.max_reformulations:
             logger.warning(
-                "Retrieval confidence %.3f < %.3f, "
-                "but maximum reformulations reached. "
-                "Continuing with current results.",
-                confidence,
+                "Maximum reformulations reached. "
+                "Current confidence: %.3f | "
+                "Best confidence: %.3f | "
+                "Threshold: %.3f. "
+                "Continuing with best retrieval results.",
+                current_confidence,
+                best_confidence,
                 threshold,
             )
 
             return "build_prompt"
         
         logger.info(
-            "Retrieval confidence %.3f < %.3f. "
-            "Reformulating query.",
-            confidence,
+            "Current retrieval confidence %.3f < %.3f. "
+            "Reformulating query. "
+            "Best confidence so far: %.3f.",
+            current_confidence,
             threshold,
+            best_confidence,
         )
 
         return "rewrite_query"
@@ -406,7 +481,9 @@ class RAGGraph:
 
         workflow = StateGraph(RAGState)
 
-        ### Nodes
+        # --------------------------------------------------
+        # Nodes
+        # --------------------------------------------------
 
         workflow.add_node(
             "validate_input",
@@ -415,129 +492,149 @@ class RAGGraph:
 
         workflow.add_node(
             "mask_pii",
-            self.mask_pii
+            self.mask_pii,
         )
 
         workflow.add_node(
             "regex_guard",
-            self.regex_guard_node
+            self.regex_guard_node,
         )
 
         workflow.add_node(
             "nemo_guard",
-            self.nemo_guard_node
+            self.nemo_guard_node,
         )
 
         workflow.add_node(
             "retrieve",
-            self.retrieve
+            self.retrieve,
         )
 
         workflow.add_node(
             "evaluate_confidence",
-            self.evaluate_confidence
+            self.evaluate_confidence,
+        )
+
+        workflow.add_node(
+            "update_best_retrieval",
+            self.update_best_retrieval,
         )
 
         workflow.add_node(
             "rewrite_query",
-            self.rewrite_query
+            self.rewrite_query,
         )
 
         workflow.add_node(
             "build_prompt",
-            self.build_prompt
+            self.build_prompt,
         )
 
         workflow.add_node(
             "generation",
-            self.generate
+            self.generate,
         )
 
         workflow.add_node(
             "format_response",
-            self.format_response
+            self.format_response,
         )
 
-        ## Start
+        # --------------------------------------------------
+        # Start
+        # --------------------------------------------------
 
         workflow.add_edge(
             START,
-            "validate_input"
+            "validate_input",
         )
 
-        ## Validation
+        # --------------------------------------------------
+        # Validation
+        # --------------------------------------------------
+
         workflow.add_conditional_edges(
             "validate_input",
             self.route_validation,
             {
-                "mask_pii":"mask_pii",
-                "end":END
-            }
+                "mask_pii": "mask_pii",
+                "end": END,
+            },
         )
 
-        ## Input GuardRails
+        # --------------------------------------------------
+        # Input Guardrails
+        # --------------------------------------------------
 
         workflow.add_edge(
             "mask_pii",
-            "regex_guard"
+            "regex_guard",
         )
 
         workflow.add_conditional_edges(
             "regex_guard",
             self.route_regex,
             {
-                "nemo_guard":"nemo_guard",
-                "retrieve":"retrieve",
-                "end":END
-            }
+                "nemo_guard": "nemo_guard",
+                "retrieve": "retrieve",
+                "end": END,
+            },
         )
 
         workflow.add_conditional_edges(
             "nemo_guard",
             self.route_nemo,
             {
-                "retrieve":"retrieve",
-                "end":END
-            }
+                "retrieve": "retrieve",
+                "end": END,
+            },
         )
 
-        ### Retrieval / Confidence Loop
+        # --------------------------------------------------
+        # Retrieval / Confidence / Reformulation Loop
+        # --------------------------------------------------
 
         workflow.add_edge(
             "retrieve",
-            "evaluate_confidence"
+            "evaluate_confidence",
+        )
+
+        workflow.add_edge(
+            "evaluate_confidence",
+            "update_best_retrieval",
         )
 
         workflow.add_conditional_edges(
-            "evaluate_confidence",
+            "update_best_retrieval",
             self.route_confidence,
             {
-                "rewrite_query":"rewrite_query",
-                "build_prompt":"build_prompt"
+                "rewrite_query": "rewrite_query",
+                "build_prompt": "build_prompt",
             },
         )
 
         workflow.add_edge(
             "rewrite_query",
-            "retrieve"
+            "retrieve",
         )
 
-
-        ### Linear generation Pipeline
+        # --------------------------------------------------
+        # Linear Generation Pipeline
+        # --------------------------------------------------
 
         workflow.add_edge(
             "build_prompt",
-            "generation"
+            "generation",
         )
 
         workflow.add_edge(
             "generation",
-            "format_response"
+            "format_response",
         )
 
         workflow.add_edge(
             "format_response",
-            END
+            END,
         )
 
         return workflow.compile()
@@ -566,7 +663,7 @@ class RAGGraph:
             "query": query,
             "masked_query": "",
             "reformulation_count": 0,
-            "max_reformulation": self.max_reformulation,
+            "max_reformulations": self.max_reformulations,
             "rewrite_history": [],
             "status": "STARTED"
         }

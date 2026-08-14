@@ -160,7 +160,7 @@ def build_graph() -> RAGGraph:
         prompt_builder=PromptBuilder(),
         generator=Generator(),
         formatter=ResponseFormatter(),
-        max_reformulations=1,
+        max_reformulations=3,
     )
 
     return graph

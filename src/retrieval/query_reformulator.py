@@ -15,79 +15,62 @@ class QueryRewriter:
     def __init__(self, llm):
         self.llm = llm
         self.prompt = ChatPromptTemplate.from_template(
-            """
-            You are a query reformulation component for a Retrieval-Augmented
-            Generation (RAG) system.
+    """
+    You are a query rewriter for a technical document search engine.
 
-            The following user query produced low-confidence document retrieval.
+    TASK:
+    Rewrite the user query into a short, precise search query optimized
+    for retrieving relevant technical documents.
 
-            Original query:
-            {query}
+    USER QUERY:
+    {query}
 
-            Previous reformulations:
-            {previous_queries}
+    PREVIOUS RETRIEVAL QUERIES:
+    {previous_queries}
 
-            Your task is to generate ONE improved search query that is more likely
-            to retrieve the information needed to answer the original question.
+    RULES:
+    - Preserve the exact meaning and scope of the user query.
+    - Do not answer the query.
+    - Identify the central technical concept and the specific mechanism,
+      component, process, or relationship being asked about.
+    - Replace conversational phrasing with precise technical terminology
+      likely to appear in technical documents.
+    - Do not add facts, concepts, entities, or assumptions not implied
+      by the original query.
+    - Keep the rewritten query concise, typically 4–10 terms.
+    - Do not use AND, OR, NOT, or quotation marks.
+    - Do not use complete sentences.
+    - If previous retrieval queries are provided, do not merely reorder
+      or slightly modify their words.
+    - Use a genuinely different retrieval perspective when possible:
+      mechanism → components
+      concept → technical terminology
+      purpose → implementation
+      process → computation
+      relationship → interaction
+    - Avoid repeating the dominant terminology of previous queries when
+      an equivalent technical alternative exists.
+    - Output exactly ONE line containing only the rewritten query.
+    - No labels, explanations, punctuation, or additional text.
 
-            Rules:
-            - Identify the user's primary information need.
-            - Preserve the original meaning and intent.
-            - Rewrite the query for document retrieval, not for conversation.
-            - Focus on the important concepts, entities, terminology, and relationships
-            required to retrieve the relevant information.
-            - Remove irrelevant conversational details, greetings, personal information,
-            identifiers, and other details that do not help retrieve the answer.
-            - Ignore PII placeholders such as [AADHAAR], [EMAIL], [PHONE], [PAN], etc.
-            unless the PII itself is directly relevant to the user's question.
-            - Do not answer the question.
-            - Do not introduce facts, entities, concepts, or assumptions that are not
-            present or clearly implied by the original query.
-            - Do not change the subject or scope of the original question.
-            - Do not repeat any previous reformulation.
-            - Avoid Boolean operators such as AND, OR, and NOT.
-            - Prefer a concise, precise natural-language query suitable for semantic
-            vector search.
-            - Return ONLY the rewritten query.
-            - Do not include explanations, labels, quotes, or reasoning.
+    EXAMPLES:
 
-            Example 1:
+    Query: What information do Transformers use to determine the order
+    of tokens in an input sequence?
+    Output: Transformer positional encoding token position sequence order
 
-            Original:
-            My Aadhaar number is [AADHAAR]. Explain positional encoding.
+    Query: How does a Transformer know which words should pay attention
+    to each other?
+    Output: Transformer self-attention relationships between tokens attention weights
 
-            Reformulation:
-            Explain positional encoding in Transformer architectures.
+    Query: How does a model remember where each word occurs in a sentence?
+    Output: Transformer positional encoding word position sequence
 
-            Example 2:
+    Now rewrite the USER QUERY above.
 
-            Original:
-            Can you tell me what self attention actually does in transformers?
-
-            Reformulation:
-            Explain the role of self-attention in Transformer architectures.
-
-            Example 3:
-
-            Original:
-            I uploaded some documents about BERT. What does masked language
-            modeling mean?
-
-            Reformulation:
-            Explain masked language modeling in BERT.
-
-            Example 4:
-
-            Original:
-            What is the difference between supervised and unsupervised learning
-            in machine learning?
-
-            Reformulation:
-            Compare supervised and unsupervised machine learning.
-
-            Generate ONE improved retrieval query now.
-            """
-        )
+    Output:
+    """
+)
 
     def reformulate_query(self, original_query: str, previous_queries: List[str]) -> str:
         """
