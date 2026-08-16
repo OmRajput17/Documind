@@ -37,6 +37,9 @@ from config import (
 )
 
 from logger import get_logger
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logger = get_logger(__name__)
 
@@ -181,7 +184,20 @@ async def run(graph: RAGGraph):
         t0 = _tick()
 
         try:
-            result = await graph.invoke(query)
+            result = await graph.invoke(
+                query,
+                config={
+                    "tags": [
+                        "documind",
+                        "rag",
+                        "smoke-test",
+                    ],
+                    "metadata": {
+                        "test_type": "smoke_test",
+                        "query_index": i,
+                    },
+                },
+            )
         except Exception as e:
             logger.exception("Graph invocation failed.")
             print(f"\n[Error] {e}\n")
@@ -235,7 +251,7 @@ async def run(graph: RAGGraph):
         # Trace                                                         #
         # ---------------------------------------------------------- #
         timings = {
-            "Confidence":    f"{result.get('retrieval_confidence', 0.0):.3f}",
+            "Confidence":    f"{result.get('best_retrieval_confidence', 0.0):.3f}",
             "Reformulations": result.get("reformulation_count", 0),
         }
 
@@ -244,7 +260,7 @@ async def run(graph: RAGGraph):
         print("DocuMind Pipeline Trace")
         print("=" * 50)
         print()
-        print(f"  {'Confidence':<22}: {result.get('retrieval_confidence', 0.0):.3f}")
+        print(f"  {'Confidence':<22}: {result.get('best_retrieval_confidence', 0.0):.3f}")
         print(f"  {'Reformulations':<22}: {result.get('reformulation_count', 0)}")
         print(f"  {'PII Detected':<22}: {result.get('pii_detected', False)}")
         print(f"  {'Regex Score':<22}: {result.get('regex_score', 0)}")

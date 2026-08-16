@@ -503,6 +503,8 @@ main_pipeline_test_queries = [
 
 graph_smoke_test_queries = [
 
+    "What is self-attention in the Transformer architecture?"
+
     # 1. Semantic gap — should need reformulation
     "What information do Transformers use to determine the order of tokens in an input sequence?",
 

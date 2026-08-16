@@ -643,12 +643,13 @@ class RAGGraph:
     # Public API
     ##########################
 
-    async def invoke(self, query: str) -> RAGState:
+    async def invoke(self, query: str, config: dict | None = None) -> RAGState:
         """
         Execute the DocuMind LangGraph.
 
         Args:
             query: User query.
+            config: Optional LangGraph RunnableConfig (LangSmith tags, metadata, etc.)
 
         Returns:
             Final graph state.
@@ -674,7 +675,8 @@ class RAGGraph:
 
         try:
             result = await self.graph.ainvoke(
-                initial_state
+                initial_state,
+                config=config,
             )
 
             logger.info(
