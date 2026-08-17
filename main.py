@@ -1,7 +1,7 @@
-import asyncio
-import time
-
 from langchain_chroma import Chroma
+
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 
 from src.ingestion.loader import Ingestion
 from src.ingestion.chunking import Chunker
@@ -25,10 +25,11 @@ from src.guardrails.prompt_injection import PromptInjectionGuard
 from src.guardrails.nemo_guard import NemoGuard
 
 from src.orchestrator.graph import RAGGraph
-
-from src.test.queries import main_pipeline_test_queries, graph_smoke_test_queries
+from src.datamodels.rag import RAGResponse
 
 from src.utils.get_llm import get_generation_llm
+
+from src.api.schemas import QueryRequest
 
 from config import (
     VECTOR_STORE_PATH,
@@ -42,30 +43,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 logger = get_logger(__name__)
-
-
-# ------------------------------------------------------------------ #
-# Helpers                                                               #
-# ------------------------------------------------------------------ #
-
-def _print_trace(timings: dict, total: float):
-    width = 22
-    print()
-    print("=" * 50)
-    print("DocuMind Pipeline Trace")
-    print("=" * 50)
-    print()
-    for stage, elapsed in timings.items():
-        print(f"  {stage:<{width}}: {elapsed:.3f} s")
-    print()
-    print("-" * 42)
-    print(f"  {'Total':<{width}}: {total:.3f} s")
-    print("=" * 50)
-
-
-def _tick() -> float:
-    return time.perf_counter()
-
 
 # ------------------------------------------------------------------ #
 # Setup                                                                 #
@@ -168,122 +145,73 @@ def build_graph() -> RAGGraph:
 
     return graph
 
+graph = build_graph()
 
-# ------------------------------------------------------------------ #
-# Main query loop                                                       #
-# ------------------------------------------------------------------ #
 
-async def run(graph: RAGGraph):
-    print("\nDocuMind is ready.\n")
+app = FastAPI(
+    title="DocuMind API",
+    description="Document RAG API",
+    version="1.0.0",
+)
 
-    for i, query in enumerate(graph_smoke_test_queries, start=1):
-        print("\n" + "=" * 50)
-        print(f"Query #{i}: {query}")
-        print("=" * 50)
+@app.get("/health")
+async def health():
+    return {
+        "status":"healthy"
+    }
 
-        t0 = _tick()
 
-        try:
-            result = await graph.invoke(
-                query,
-                config={
-                    "tags": [
-                        "documind",
-                        "rag",
-                        "smoke-test",
-                    ],
-                    "metadata": {
-                        "test_type": "smoke_test",
-                        "query_index": i,
-                    },
+@app.post("/query", response_model=RAGResponse)
+async def query(request: QueryRequest):
+    try:
+        result = await graph.invoke(
+            request.query,
+            config={
+                "tags":[
+                    "documind",
+                    "rag",
+                    "api"
+                ],
+                "metadata":{
+                    "test_type":"api"
                 },
-            )
-        except Exception as e:
-            logger.exception("Graph invocation failed.")
-            print(f"\n[Error] {e}\n")
-            continue
+            },
+        )
 
-        total = _tick() - t0
+    except Exception as e:
+        logger.exception("Graph Invocation failed.")
+        raise HTTPException(
+            status_code=500,
+            detail="RAG Pipeline Failed."
+        )
 
-        status = result.get("status", "UNKNOWN")
+    status = result.get("status", "UNKNOWN")
 
-        # ---------------------------------------------------------- #
-        # Blocked / error states                                       #
-        # ---------------------------------------------------------- #
-        if status == "BLOCKED":
-            reason = (
+    if status == "BLOCKED":
+        return {
+            "status":"BLOCKED",
+            "reason":(
                 result.get("validation_reason")
                 or result.get("nemo_reason")
-                or "Query blocked."
+                or "Query Blocked"
             )
-            print(f"\n[Blocked] {reason}")
-            print(f"\n  Total: {total:.3f} s")
-            continue
-
-        if status == "ERROR":
-            print(f"\n[Error] {result.get('error', 'Unknown error.')}")
-            print(f"\n  Total: {total:.3f} s")
-            continue
-
-        # ---------------------------------------------------------- #
-        # Completed — print response                                   #
-        # ---------------------------------------------------------- #
-        response = result.get("response")
-
-        if response is None:
-            print("\n[Warning] Pipeline completed but no response was returned.")
-            continue
-
-        print("\nAnswer")
-        print("-" * 50)
-        print(response.answer)
-
-        print(f"\nSources  ({len(response.sources)} cited)")
-        print("-" * 50)
-        for j, src in enumerate(response.sources, start=1):
-            print(
-                f"  [{j}] {src.source}  "
-                f"p.{src.page}  "
-                f"score={src.relevance_score}"
-            )
-
-        # ---------------------------------------------------------- #
-        # Trace                                                         #
-        # ---------------------------------------------------------- #
-        timings = {
-            "Confidence":    f"{result.get('best_retrieval_confidence', 0.0):.3f}",
-            "Reformulations": result.get("reformulation_count", 0),
         }
+    
+    if status == "ERROR":
+        raise HTTPException(
+            status_code=500,
+            detail=result.get(
+                "error",
+                "Unknown Pipeline Error."
+            )
+        )
 
-        print()
-        print("=" * 50)
-        print("DocuMind Pipeline Trace")
-        print("=" * 50)
-        print()
-        print(f"  {'Confidence':<22}: {result.get('best_retrieval_confidence', 0.0):.3f}")
-        print(f"  {'Reformulations':<22}: {result.get('reformulation_count', 0)}")
-        print(f"  {'PII Detected':<22}: {result.get('pii_detected', False)}")
-        print(f"  {'Regex Score':<22}: {result.get('regex_score', 0)}")
-        print()
-        print("-" * 42)
-        print(f"  {'Total':<22}: {total:.3f} s")
-        print("=" * 50)
+    response = result.get("response")
 
-    print("\n" + "=" * 50)
-    print("Main pipeline test complete.")
-    print("=" * 50)
+    if response is None:
+        raise HTTPException(
+            status_code=500,
+            detail="Pipeline Completed without a response."
+        )
 
-
-def main():
-    try:
-        graph = build_graph()
-    except Exception as e:
-        print(f"\n[Fatal] Failed to initialize DocuMind: {e}")
-        logger.exception("Startup failed.")
-        return
-
-    asyncio.run(run(graph))
-
-
-if __name__ == "__main__":
-    main()
+    return response
