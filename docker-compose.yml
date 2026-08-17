@@ -1,0 +1,25 @@
+services:
+  documind:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: documind
+
+    ports:
+      - "8000:8000"
+
+    env_file:
+      - .env
+
+    volumes:
+      - documind_models:/app/models
+      - documind_cache:/app/cache
+      - documind_vectorstore:/app/vectorstore
+
+    restart: unless-stopped
+
+volumes:
+  documind_models:
+  documind_cache:
+  documind_vectorstore:
