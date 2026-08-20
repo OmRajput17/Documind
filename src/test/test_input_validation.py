@@ -2,7 +2,7 @@ from src.test.queries import input_validation_test_queries
 from src.guardrails.input_validation import InputValidator
 
 def test_valid():
-    for query in test_queries:
+    for query in input_validation_test_queries:
         valid, reason = InputValidator().is_valid_query(query=query)
 
         print(f"Query: {query}")
