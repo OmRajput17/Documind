@@ -31,13 +31,13 @@ jobs:
         run: uv sync
 
       - name: Run validation tests
-        run: python -m src.test.test_input_validation
+        run: uv run python -m src.test.test_input_validation
 
       - name: Run PII tests
-        run: python -m src.test.test_pii_masking
+        run: uv run python -m src.test.test_pii_masking
 
       - name: Run prompt injection tests
-        run: python -m src.test.test_prompt_injection
+        run: uv run python -m src.test.test_prompt_injection
 
       - name: Run BM25 tests
-        run: python -m src.test.test_bm25_retriever
+        run: uv run python -m src.test.test_bm25_retriever
