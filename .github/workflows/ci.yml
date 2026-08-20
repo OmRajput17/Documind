@@ -31,13 +31,13 @@ jobs:
         run: uv sync --frozen
 
       - name: Run validation tests
-        run: python src/test/test_input_validation.py
+        run: python -m src.test.test_input_validation
 
       - name: Run PII tests
-        run: python src/test/test_pii_masking.py
+        run: python -m src.test.test_pii_masking.py
 
       - name: Run prompt injection tests
-        run: python src/test/test_prompt_injection.py
+        run: python -m src.test.test_prompt_injection.py
 
       - name: Run BM25 tests
-        run: python src/test/test_bm25_retriever.py
+        run: python -m src.test.test_bm25_retriever.py
