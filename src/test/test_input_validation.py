@@ -1,4 +1,4 @@
-from src.test.queries import test_queries
+from src.test.queries import input_validation_test_queries
 from src.guardrails.input_validation import InputValidator
 
 def test_valid():
