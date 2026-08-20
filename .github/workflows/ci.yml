@@ -12,24 +12,32 @@ on:
             - develop
 
 jobs:
-    test:
-        runs-on: ubuntu-latest
+  test:
+    runs-on: ubuntu-latest
 
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-            - name: Install uv
-              uses: astral-sh/setup-uv@v
-              with:
-                version: "latest"
-                enable-cache: true
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-            - name: Set up Python
-              run: uv python install 3.12
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
 
-            - name: Install dependencies
-              run: uv sync --frozen
+      - name: Install dependencies
+        run: uv sync --frozen
 
-            - name: Run tests
-              run: 
+      - name: Run validation tests
+        run: python src/test/test_input_validation.py
+
+      - name: Run PII tests
+        run: python src/test/test_pii_masking.py
+
+      - name: Run prompt injection tests
+        run: python src/test/test_prompt_injection.py
+
+      - name: Run BM25 tests
+        run: python src/test/test_bm25_retriever.py
