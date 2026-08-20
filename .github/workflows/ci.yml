@@ -28,16 +28,16 @@ jobs:
         uses: astral-sh/setup-uv@v7
 
       - name: Install dependencies
-        run: uv sync --frozen
+        run: uv sync
 
       - name: Run validation tests
         run: python -m src.test.test_input_validation
 
       - name: Run PII tests
-        run: python -m src.test.test_pii_masking.py
+        run: python -m src.test.test_pii_masking
 
       - name: Run prompt injection tests
-        run: python -m src.test.test_prompt_injection.py
+        run: python -m src.test.test_prompt_injection
 
       - name: Run BM25 tests
-        run: python -m src.test.test_bm25_retriever.py
+        run: python -m src.test.test_bm25_retriever
