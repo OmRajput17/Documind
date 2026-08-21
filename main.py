@@ -1,11 +1,10 @@
-from langchain_chroma import Chroma
-
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from src.ingestion.loader import Ingestion
 from src.ingestion.chunking import Chunker
 from src.ingestion.embeddings import get_embeddings_model
+from src.vector_store.vectorstore import VectorStore
 
 from src.retrieval.bm25_retriever import BM25Retriever
 from src.retrieval.dense_retriever import DenseRetriever
@@ -32,7 +31,6 @@ from src.utils.get_llm import get_generation_llm
 from src.api.schemas import QueryRequest
 
 from config import (
-    VECTOR_STORE_PATH,
     CONFIDENCE_THRESHOLD,
     CONFIDENCE_TOP_K,
 )
@@ -65,31 +63,8 @@ def build_graph() -> RAGGraph:
     # ---------------------------------------------------------------- #
     embedding_model = get_embeddings_model()
 
-    vectorstore = Chroma(
-        persist_directory=str(VECTOR_STORE_PATH),
-        embedding_function=embedding_model,
-    )
-
-    if vectorstore._collection.count() == 0:
-        logger.info(
-            "Vector store empty — building and persisting at %s.",
-            VECTOR_STORE_PATH,
-        )
-        vectorstore = Chroma.from_documents(
-            documents=chunks,
-            embedding=embedding_model,
-            persist_directory=str(VECTOR_STORE_PATH),
-        )
-        logger.info(
-            "Vector store built with %d chunks.",
-            vectorstore._collection.count(),
-        )
-    else:
-        logger.info(
-            "Loaded existing vector store from %s (%d chunks).",
-            VECTOR_STORE_PATH,
-            vectorstore._collection.count(),
-        )
+    vs = VectorStore(embedding_model=embedding_model)
+    vectorstore = vs.build_vector_store(chunks)
 
     # ---------------------------------------------------------------- #
     # Retriever stack                                                    #

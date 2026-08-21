@@ -1,25 +1,26 @@
+#src/ingestion/embeddings.py
+
 from functools import lru_cache
 
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEndpointEmbeddings
 from logger import get_logger
 
-from config import EMBEDDING_MODEL_NAME, MODEL_CACHE_PATH
+from config import EMBEDDING_MODEL_NAME
 
 logger = get_logger(__name__)
 
 
 @lru_cache(maxsize=4)
-def get_embeddings_model(model_name: str = EMBEDDING_MODEL_NAME) -> HuggingFaceEmbeddings:
+def get_embeddings_model(model_name: str = EMBEDDING_MODEL_NAME) -> HuggingFaceEndpointEmbeddings:
     """
-    Load and return a HuggingFaceEmbeddings model.
+    Load and return a HuggingFace Inference API embeddings client.
 
-    Results are cached by model_name — the same model instance is reused
-    across all callers within a process, avoiding repeated loads.
+    Runs on HuggingFace's servers — no local model weights, no torch,
+    no cache_folder needed. Requires HUGGINGFACEHUB_API_TOKEN to be set
+    as an environment variable.
     """
-    logger.info(f"Loading embedding model: {model_name}")
-    logger.info(f"Cache directory: {MODEL_CACHE_PATH}")
+    logger.info(f"Connecting to HuggingFace-hosted embedding model: {model_name}")
 
-    return HuggingFaceEmbeddings(
-        model_name=model_name,
-        cache_folder=str(MODEL_CACHE_PATH),
+    return HuggingFaceEndpointEmbeddings(
+        model=model_name,
     )

@@ -14,6 +14,9 @@ VECTOR_STORE_PATH = BASE_DIR/"vectorstore"
 
 LOG_DIR = Path(__file__).resolve().parent / "logs"
 
+PG_CONNECTION_STRING = "postgresql+psycopg://langchain:langchain@localhost:6024/langchain"
+PG_COLLECTION_NAME = "documind_budget"
+
 
 ### Chunking
 CHUNK_SIZE = 1200
@@ -27,7 +30,7 @@ TEXT_SEPARATORS = [
 ]
 
 ## Embedding Model
-EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+EMBEDDING_MODEL_NAME = "BAAI/bge-base-en-v1.5"
 MODEL_CACHE_PATH = BASE_DIR / "models"
 
 ## BM25 Index Cache

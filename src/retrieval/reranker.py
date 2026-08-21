@@ -93,6 +93,17 @@ class Reranker:
                 sentence_pairs,
                 batch_size=16,
                 show_progress_bar=False,
+                activation_fn=self.model.activation_fn,
+            )
+
+            score_values = [float(score) for score in scores]
+            activation_name = type(self.model.activation_fn).__name__
+
+            logger.info(
+                "Reranker scores | labels=%s | activation=%s | scores=%s",
+                self.model.num_labels,
+                activation_name,
+                [round(score, 6) for score in score_values],
             )
 
             # Synchronize again before stopping the clock so GPU latency
@@ -113,7 +124,7 @@ class Reranker:
             reranked = sorted(
                 (
                     (document, score)
-                    for (document, _), score in zip(results, scores)
+                    for (document, _), score in zip(results, score_values)
                 ),
                 key=lambda x: x[1],
                 reverse=True,
